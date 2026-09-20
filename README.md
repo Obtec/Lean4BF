@@ -1,3 +1,8 @@
+> **작성자 (Author)**: 이인수 (Weird14446)  
+> **전자우편 (Contact)**: weird14446@yeonsung.ac.kr  
+> **최종 수정일**: 2026-09-20  
+> **Note**: 본 문서의 기획 정리 및 초안 구성에는 **Gemini 3.8 Flash** 모델의 지원을 받았습니다.
+
 # Lean4BF (Lean 4 Backend Framework)
 
 > **수학적 정형 검증(Formal Verification) 기반의 고신뢰성 Lean 4 백엔드 프레임워크**
@@ -64,10 +69,3 @@ Lean 4는 현대적인 일반 범용 프로그래밍 언어이면서 동시에 �
 1. [Terence Tao on AI in Mathematics (YouTube)](https://www.youtube.com/watch?v=Q8Fkpi18QXU)
 2. [Leiden Declaration on Human-Centric Mathematics in the Age of AI](https://leidendeclaration.ai/)
 3. [Wikipedia - Vibe coding](https://en.wikipedia.org/wiki/Vibe_coding)
-
----
-
-> **작성자 (Author)**: 이인수 (Weird14446)  
-> **전자우편 (Contact)**: weird14446@yeonsung.ac.kr  
-> **최종 수정일**: 2026-09-20  
-> **Note**: 본 문서의 기획 정리 및 초안 구성에는 **Gemini 3.8 Flash** 모델의 지원을 받았습니다.
