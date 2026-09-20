@@ -1,0 +1,7 @@
+.git
+.github
+.lake
+*.olean
+*.ilean
+*.c
+*.o

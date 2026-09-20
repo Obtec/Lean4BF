@@ -1,0 +1,10 @@
+name = "Lean4BF"
+version = "0.1.0"
+defaultTargets = ["lean4bf"]
+
+[[lean_lib]]
+name = "Lean4BF"
+
+[[lean_exe]]
+name = "lean4bf"
+root = "Main"

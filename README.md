@@ -8,15 +8,16 @@
 > **수학적 정형 검증(Formal Verification) 기반의 고신뢰성 Lean 4 백엔드 프레임워크**
 
 ![License](https://img.shields.io/badge/license-GPL--3.0-blue.svg)
-![Status](https://img.shields.io/badge/status-concept%20%2F%20planning-orange.svg)
+![Status](https://img.shields.io/badge/status-active%20development-green.svg)
+![Engine](https://img.shields.io/badge/engine-Std.Http-blueviolet.svg)
 
 ---
 
 ## 📌 소개 (Introduction)
 
-**Lean4BF**는 대화형 정리 증명기(Interactive Theorem Prover)이자 순수 함수형 언어인 **Lean 4**를 기반으로 안전하고 신뢰할 수 있는 웹 백엔드 시스템을 구축하기 위한 프레임워크입니다.
+**Lean4BF**는 대화형 정리 증명기(Interactive Theorem Prover)이자 순수 함수형 언어인 **Lean 4**와 내장 표준 라이브러리인 **`Std.Http`**를 기반으로 안전하고 신뢰할 수 있는 웹 백엔드 시스템을 구축하기 위한 프레임워크입니다.
 
-비즈니스 로직의 올바름을 컴파일 타임에 수학적으로 검증하면서도, 현대적인 백엔드 웹 개발 환경에 필요한 생산성과 편의성을 제공하는 것을 목표로 합니다.
+비즈니스 로직의 올바름을 컴파일 타임에 수학적으로 검증하면서도, 현대적인 웹 백엔드 개발 환경에 필요한 생산성과 직관적인 개발자 경험(DX)을 제공하는 것을 목표로 합니다.
 
 ---
 
@@ -37,24 +38,149 @@ Lean 4는 현대적인 일반 범용 프로그래밍 언어이면서 동시에 �
 
 ---
 
+## 📦 설치 방법 (Installation)
+
+다른 Lean 4 프로젝트에서 `Lean4BF`를 라이브러리로 사용하려면 프로젝트의 Lake 설정 파일에 의존성을 추가합니다.
+
+### 1) `lakefile.toml`을 사용하는 경우:
+```toml
+[[require]]
+name = "Lean4BF"
+git = "https://github.com/Obtec/Lean4BF.git"
+rev = "main"
+```
+
+### 2) `lakefile.lean`을 사용하는 경우:
+```lean
+require Lean4BF from git "https://github.com/Obtec/Lean4BF.git" @ "main"
+```
+
+추가 후 의존성을 다운로드합니다:
+```bash
+lake update
+```
+
+---
+
+## ⚡ 빠른 시작 (Quick Start)
+
+가장 간단한 웹 서버 예제입니다:
+
+```lean
+import Lean4BF
+
+open Lean4BF
+
+def main : IO Unit := do
+  let app := App.empty
+    -- 1) 일반 텍스트 응답
+    |>.get "/" (fun _ =>
+      textResponse "Welcome to Lean4BF!")
+
+    -- 2) JSON 응답
+    |>.get "/health" (fun _ =>
+      jsonResponse "{\"status\":\"healthy\",\"engine\":\"Std.Http\"}")
+
+  -- 8080 포트로 서버 실행
+  app.run (port := 8080)
+```
+
+빌드 및 실행:
+```bash
+lake build
+./.lake/build/bin/lean4bf
+```
+
+---
+
+## 📖 사용 가이드 (Usage Guide)
+
+### 1. 라우트 등록 (Routing)
+`App.empty`에서 시작하여 빌더 패턴(`.get`, `.post`, `.put`, `.delete`)으로 라우트를 연결합니다:
+
+```lean
+let app := App.empty
+  |>.get "/users" getUsersHandler
+  |>.post "/users" createUserHandler
+  |>.put "/users" updateUserHandler
+  |>.delete "/users" deleteUserHandler
+```
+
+### 2. 요청 정보 읽기 (Request)
+핸들러 함수의 인자로 전달되는 `req` 객체를 통해 요청 정보를 조회합니다:
+
+```lean
+app.post "/api/echo" (fun req => do
+  -- HTTP 메서드 및 URI 경로
+  let method := req.line.method
+  let uri := req.line.uri
+
+  -- 특정 헤더 읽기
+  let auth := req.line.headers.get? (.mk "authorization")
+
+  -- 요청 본문(Body) 비동기 읽기
+  let bodyStr ← req.body.readAll
+
+  jsonResponse s!"{{\"received\": \"{bodyStr}\"}}"
+)
+```
+
+### 3. 응답 생성 (Response)
+프레임워크 헬퍼 또는 `Std.Http`의 응답 빌더를 활용합니다:
+
+```lean
+-- 기본 헬퍼
+textResponse "Hello"                  -- 200 OK (text/plain)
+jsonResponse "{\"status\":\"ok\"}"    -- 200 OK (application/json)
+notFoundResponse "Page Not Found"     -- 404 Not Found
+
+-- 커스텀 상태 코드 및 헤더 설정
+fun req => do
+  Response.withStatus .created
+    |>.header! "X-Custom-Header" "MyValue"
+    |>.json "{\"result\":\"created\"}"
+```
+
+---
+
+## 🐳 Docker & Nginx 배포
+
+Lean4BF는 프로덕션 환경을 위해 **Nginx 리버스 프록시**와 함께 컨테이너화되어 제공됩니다.
+
+```bash
+# Nginx(80) + Lean4BF(8080) 동시 빌드 및 실행
+docker compose up -d --build
+
+# 테스트 요청
+curl http://localhost/
+curl http://localhost/health
+
+# 컨테이너 종료
+docker compose down
+```
+
+---
+
 ## 🚀 주요 목표 (Key Goals)
 
+- [x] **Std.Http 기반 경량 HTTP 서버 연동**
+- [x] **기본 라우팅 시스템 (`App` 빌더 DSL)**
+- [x] **Nginx 리버스 프록시 및 Docker 배포 지원**
 - [ ] **Type-safe & Verified Routing:** 요청/응답 스펙과 경로 불변식을 컴파일 타임에 검증하는 라우팅 시스템
 - [ ] **Domain Logic Verification:** 결제, 권한, 상태 전이 등 핵심 비즈니스 로직에 대한 명제 정의 및 검증 도구 지원
 - [ ] **Database & Model Invariants:** 데이터 무결성 규칙을 Lean 4 타입 시스템으로 모델링
-- [ ] **Lightweight HTTP Server:** Lean 4 런타임 위에서 가볍고 빠르게 동작하는 서버 코어 구축
 
 ---
 
 ## 🗺️ 로드맵 (Roadmap)
 
-- **Phase 1: 기획 및 아키텍처 설계** (현재 단계)
-  - 기본 HTTP 파서/서버 인터페이스 프로토타이핑
-  - 정형 검증 레이어와 웹 서비스 레이어의 분리 및 통합 모델 연구
-- **Phase 2: 최소 기능 구현 (PoC)**
-  - 간단한 상태 전이 및 인과 관계를 증명할 수 있는 백엔드 API 예제 구현
+- **Phase 1: 기획 및 코어 프로토타입** (완료)
+  - `Std.Http` 기반 코어 추상화 (`Core`, `Router`, `App`)
+  - Nginx + Docker Compose 환경 구축
+- **Phase 2: 정형 검증 레이어 도입 (PoC)** (진행 중)
+  - 상태 전이 및 비즈니스 인과 관계를 컴파일 타임에 증명하는 백엔드 API 예제 구현
 - **Phase 3: 생태계 확장**
-  - AI 보조 개발 템플릿 및 가이드라인 제공
+  - AI 보조 개발 템플릿 및 정형 검증 가이드라인 제공
 
 ---
 
